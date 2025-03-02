@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Real-Time Database</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <h1>Real-Time Database</h1>
+  <form id="dataForm">
+    <input type="text" id="dataInput" placeholder="Enter data" required>
+    <button type="submit">Submit</button>
+  </form>
+  <ul id="dataList"></ul>
+
+  <script>
+    const socket = io();
+
+    const form = document.getElementById('dataForm');
+    const dataList = document.getElementById('dataList');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const dataInput = document.getElementById('dataInput');
+      socket.emit('insert', { data: dataInput.value });
+      dataInput.value = '';
+    });
+
+    socket.on('insert', (data) => {
+      const li = document.createElement('li');
+      li.textContent = data.data;
+      dataList.appendChild(li);
+    });
+  </script>
+</body>
+</html>
