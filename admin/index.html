@@ -113,51 +113,105 @@
     <div class="sidebar">
       <h2>Admin Panel</h2>
       <ul>
-        <li><i class="fas fa-tachometer-alt"></i> Dashboard</li>
-        <li><i class="fas fa-database"></i> Manage Database</li>
-        <li><i class="fas fa-project-diagram"></i> Projects</li>
-        <li><i class="fas fa-users"></i> Users</li>
-        <li><i class="fas fa-cogs"></i> Settings</li>
+        <li onclick="showSection('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li onclick="showSection('manageDatabase')"><i class="fas fa-database"></i> Manage Database</li>
+        <li onclick="showSection('projects')"><i class="fas fa-project-diagram"></i> Projects</li>
+        <li onclick="showSection('users')"><i class="fas fa-users"></i> Users</li>
+        <li onclick="showSection('settings')"><i class="fas fa-cogs"></i> Settings</li>
       </ul>
     </div>
     <div class="main-content">
-      <h1>Dashboard</h1>
-      <div class="card">
-        <h2>Database Management</h2>
-        <form id="dataForm">
-          <div class="form-group">
-            <label for="dataInput">Enter Data</label>
-            <input type="text" id="dataInput" placeholder="Enter data" required>
-          </div>
-          <button type="submit" class="btn">Submit</button>
-        </form>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="dataList"></tbody>
-          </table>
+      <div id="dashboard" class="section">
+        <h1>Dashboard</h1>
+        <div class="card">
+          <h2>Overview</h2>
+          <p>Welcome to the admin panel. Use the sidebar to navigate through different sections.</p>
         </div>
       </div>
-      <div class="card">
-        <h2>Projects</h2>
-        <p>Manage and connect to your other projects here.</p>
-        <button class="btn">Add Project</button>
+      <div id="manageDatabase" class="section" style="display: none;">
+        <h1>Manage Database</h1>
+        <div class="card">
+          <h2>Database Management</h2>
+          <form id="dataForm">
+            <div class="form-group">
+              <label for="dataInput">Enter Data</label>
+              <input type="text" id="dataInput" placeholder="Enter data" required>
+            </div>
+            <button type="submit" class="btn">Submit</button>
+          </form>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dataList"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <h2>Users</h2>
-        <p>Manage users and their permissions here.</p>
-        <button class="btn">Add User</button>
+      <div id="projects" class="section" style="display: none;">
+        <h1>Projects</h1>
+        <div class="card">
+          <h2>Project Management</h2>
+          <p>Manage and connect to your other projects here.</p>
+          <button class="btn">Add Project</button>
+        </div>
+      </div>
+      <div id="users" class="section" style="display: none;">
+        <h1>Users</h1>
+        <div class="card">
+          <h2>User Management</h2>
+          <form id="userForm">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" placeholder="Enter username" required>
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+            <div class="form-group">
+              <label for="role">Role</label>
+              <input type="text" id="role" placeholder="Enter role (admin/user)" required>
+            </div>
+            <button type="submit" class="btn">Add User</button>
+          </form>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="settings" class="section" style="display: none;">
+        <h1>Settings</h1>
+        <div class="card">
+          <h2>System Settings</h2>
+          <p>Configure system settings here.</p>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    const sections = document.querySelectorAll('.section');
+    function showSection(sectionId) {
+      sections.forEach(section => {
+        section.style.display = section.id === sectionId ? 'block' : 'none';
+      });
+    }
+
     const socket = io();
 
     const form = document.getElementById('dataForm');
@@ -213,6 +267,51 @@
       .then(response => response.json())
       .then(data => {
         data.forEach(addRow);
+      });
+
+    const userForm = document.getElementById('userForm');
+    const userList = document.getElementById('userList');
+
+    userForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role })
+      });
+      const user = await response.json();
+      addUserRow(user);
+      userForm.reset();
+    });
+
+    function addUserRow(user) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${user.username}</td>
+        <td>${user.role}</td>
+        <td>
+          <button class="btn btn-danger" onclick="deleteUser('${user._id}')">Delete</button>
+        </td>
+      `;
+      userList.appendChild(row);
+    }
+
+    async function deleteUser(id) {
+      const response = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.deleted === 1) {
+        document.querySelector(`button[onclick="deleteUser('${id}')"]`).parentElement.parentElement.remove();
+      }
+    }
+
+    // Load initial users from the server
+    fetch('/api/users')
+      .then(response => response.json())
+      .then(users => {
+        users.forEach(addUserRow);
       });
   </script>
 </body>
