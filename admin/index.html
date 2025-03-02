@@ -1,55 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
-  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
     body {
       font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: flex;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #333;
+      color: #fff;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding-top: 20px;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar ul li {
+      padding: 15px 20px;
+      cursor: pointer;
+    }
+    .sidebar ul li:hover {
+      background-color: #575757;
+    }
+    .sidebar ul li i {
+      margin-right: 10px;
+    }
+    .main-content {
+      margin-left: 250px;
+      padding: 20px;
+      flex: 1;
+    }
+    .main-content h1 {
+      margin-top: 0;
+    }
+    .card {
+      background-color: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .table-container {
+      overflow-x: auto;
+      margin-top: 20px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
     }
     th, td {
       padding: 8px;
       text-align: left;
-      border-bottom: 1px solid #ddd;
     }
     th {
       background-color: #f2f2f2;
     }
-    tr:hover {
-      background-color: #f5f5f5;
-    }
-    button {
-      padding: 5px 10px;
+    .btn {
+      padding: 10px 20px;
       color: white;
-      background-color: red;
+      background-color: #007bff;
       border: none;
       cursor: pointer;
+      margin-right: 10px;
     }
-    button:hover {
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    .btn-danger {
+      background-color: red;
+    }
+    .btn-danger:hover {
       background-color: darkred;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <h1>Admin Panel</h1>
-  <form id="dataForm">
-    <input type="text" id="dataInput" placeholder="Enter data" required>
-    <button type="submit">Submit</button>
-  </form>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="dataList"></tbody>
-  </table>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Admin Panel</h2>
+      <ul>
+        <li><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li><i class="fas fa-database"></i> Manage Database</li>
+        <li><i class="fas fa-project-diagram"></i> Projects</li>
+        <li><i class="fas fa-users"></i> Users</li>
+        <li><i class="fas fa-cogs"></i> Settings</li>
+      </ul>
+    </div>
+    <div class="main-content">
+      <h1>Dashboard</h1>
+      <div class="card">
+        <h2>Database Management</h2>
+        <form id="dataForm">
+          <div class="form-group">
+            <label for="dataInput">Enter Data</label>
+            <input type="text" id="dataInput" placeholder="Enter data" required>
+          </div>
+          <button type="submit" class="btn">Submit</button>
+        </form>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dataList"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Projects</h2>
+        <p>Manage and connect to your other projects here.</p>
+        <button class="btn">Add Project</button>
+      </div>
+      <div class="card">
+        <h2>Users</h2>
+        <p>Manage users and their permissions here.</p>
+        <button class="btn">Add User</button>
+      </div>
+    </div>
+  </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
@@ -72,8 +179,8 @@
       row.innerHTML = `
         <td contenteditable="true">${data.data}</td>
         <td>
-          <button onclick="deleteData('${data._id}')">Delete</button>
-          <button onclick="updateData('${data._id}', this)">Update</button>
+          <button class="btn btn-danger" onclick="deleteData('${data._id}')">Delete</button>
+          <button class="btn" onclick="updateData('${data._id}', this)">Update</button>
         </td>
       `;
       dataList.appendChild(row);
