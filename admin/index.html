@@ -2,6 +2,37 @@
 <html>
 <head>
   <title>Admin Panel</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    button {
+      padding: 5px 10px;
+      color: white;
+      background-color: red;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkred;
+    }
+  </style>
 </head>
 <body>
   <h1>Admin Panel</h1>
@@ -9,7 +40,15 @@
     <input type="text" id="dataInput" placeholder="Enter data" required>
     <button type="submit">Submit</button>
   </form>
-  <ul id="dataList"></ul>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="dataList"></tbody>
+  </table>
 
   <script>
     const socket = io();
@@ -25,10 +64,49 @@
     });
 
     socket.on('insert', (data) => {
-      const li = document.createElement('li');
-      li.textContent = data.data;
-      dataList.appendChild(li);
+      addRow(data);
     });
+
+    function addRow(data) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td contenteditable="true">${data.data}</td>
+        <td>
+          <button onclick="deleteData('${data._id}')">Delete</button>
+          <button onclick="updateData('${data._id}', this)">Update</button>
+        </td>
+      `;
+      dataList.appendChild(row);
+    }
+
+    async function deleteData(id) {
+      const response = await fetch(`/api/data/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.deleted === 1) {
+        document.querySelector(`button[onclick="deleteData('${id}')"]`).parentElement.parentElement.remove();
+      }
+    }
+
+    async function updateData(id, button) {
+      const row = button.parentElement.parentElement;
+      const newData = row.cells[0].innerText;
+      const response = await fetch(`/api/data/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newData })
+      });
+      const result = await response.json();
+      if (result.modified === 1) {
+        alert('Data updated successfully');
+      }
+    }
+
+    // Load initial data from the server
+    fetch('/api/data')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(addRow);
+      });
   </script>
 </body>
 </html>
